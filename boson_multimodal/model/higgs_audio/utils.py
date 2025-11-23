@@ -12,6 +12,22 @@ else:
     _SeqAllToAll = None
 
 
+def get_best_device():
+    """
+    Automatically detect and return the best available device.
+    Priority: CUDA > MPS (Metal) > CPU
+    
+    Returns:
+        str: Device name ("cuda", "mps", or "cpu")
+    """
+    if torch.cuda.is_available():
+        return "cuda"
+    elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+        return "mps"
+    else:
+        return "cpu"
+
+
 def _ceil_to_nearest(n, round_to):
     return (n + round_to - 1) // round_to * round_to
 

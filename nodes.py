@@ -1,5 +1,6 @@
 from .boson_multimodal.serve.serve_engine import HiggsAudioServeEngine, HiggsAudioResponse
 from .boson_multimodal.data_types import ChatMLSample, Message, AudioContent
+from .boson_multimodal.model.higgs_audio.utils import get_best_device
 
 import torch
 import torchaudio
@@ -172,12 +173,7 @@ class HiggsAudio:
     def generate(self, MODEL_PATH, AUDIO_TOKENIZER_PATH, system_prompt, prompt, max_new_tokens, temperature, top_p, top_k, device, voice_preset="voice_clone", reference_audio=None, reference_text="", audio_priority="auto"):
         # Determine device
         if device == "auto":
-            if torch.cuda.is_available():
-                device = "cuda"
-            elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
-                device = "mps"
-            else:
-                device = "cpu"
+            device = get_best_device()
         
         # Create cache key
         cache_key = f"{MODEL_PATH}_{AUDIO_TOKENIZER_PATH}_{device}"
