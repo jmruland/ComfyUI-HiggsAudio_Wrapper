@@ -12,7 +12,7 @@ A comprehensive ComfyUI wrapper for HiggsAudio v2, enabling high-quality text-to
 - **Multiple Voice Presets**: Includes pre-configured voices (belinda, en_woman, en_man, etc.)
 - **Flexible Audio Prioritization**: Control whether to use voice presets or custom reference audio
 - **Customizable System Prompts**: Fine-tune audio generation with scene descriptions and style control
-- **GPU Acceleration**: Supports CUDA for faster generation
+- **GPU Acceleration**: Supports CUDA and Apple Metal (MPS) for faster generation
 - **ComfyUI Integration**: Seamless integration with ComfyUI workflows
 
 ## Installation
@@ -21,7 +21,7 @@ A comprehensive ComfyUI wrapper for HiggsAudio v2, enabling high-quality text-to
 
 - Python 3.8+
 - ComfyUI
-- CUDA-compatible GPU (recommended)
+- CUDA-compatible GPU or Apple Silicon Mac with Metal GPU (recommended)
 
 ### ComfyUI Installation
 
@@ -105,7 +105,7 @@ Generate audio following instruction.
 - **temperature** (0.0-2.0): Controls voice consistency (0.8 = more stable, 1.2 = more varied)
 - **top_p** (0.1-1.0): Affects pronunciation variation (0.9-0.95 recommended)
 - **top_k** (-1-100): Fine-tunes voice characteristics (50 = default)
-- **device**: auto/cuda/cpu (auto = recommended)
+- **device**: auto/cuda/mps/cpu (auto = recommended, mps = Metal for Apple Silicon)
 
 ## File Structure
 
@@ -165,9 +165,9 @@ For acoustic effects like reverb or background sounds, consider post-processing 
 - Use higher quality reference audio
 - Ensure reference audio has consistent background noise levels
 
-#### CUDA Out of Memory
+#### GPU Out of Memory (CUDA or Metal)
 - Reduce `max_new_tokens`
-- Use `device: cpu` instead of auto/cuda
+- Use `device: cpu` instead of auto/cuda/mps
 - Close other GPU-intensive applications
 
 #### Model Loading Issues
@@ -178,11 +178,12 @@ For acoustic effects like reverb or background sounds, consider post-processing 
 ### Performance Tips
 
 1. **First Run**: Model downloading may take time
-2. **GPU Memory**: 8GB+ VRAM recommended for optimal performance
-3. **Caching**: Models are cached after first load for faster subsequent runs
-4. **Voice Quality**: Use high-quality reference audio for best results
-5. **Parameter Tuning**: Lower temperature (0.8) for consistent voice, higher (1.2) for variation
-6. **Text Formatting**: Use proper punctuation for natural speech rhythm
+2. **GPU Memory**: 8GB+ VRAM/Unified Memory recommended for optimal performance
+3. **Apple Silicon**: Use `device: mps` or `device: auto` to leverage Metal GPU acceleration
+4. **Caching**: Models are cached after first load for faster subsequent runs
+5. **Voice Quality**: Use high-quality reference audio for best results
+6. **Parameter Tuning**: Lower temperature (0.8) for consistent voice, higher (1.2) for variation
+7. **Text Formatting**: Use proper punctuation for natural speech rhythm
 
 ## API Reference
 
@@ -247,4 +248,4 @@ For issues and questions:
 
 ---
 
-**Note**: This wrapper requires significant computational resources. A CUDA-compatible GPU with 8GB+ VRAM is recommended for optimal performance.
+**Note**: This wrapper requires significant computational resources. A CUDA-compatible GPU with 8GB+ VRAM or Apple Silicon Mac with 16GB+ Unified Memory is recommended for optimal performance.

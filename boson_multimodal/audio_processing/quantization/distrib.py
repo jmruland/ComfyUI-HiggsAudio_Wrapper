@@ -9,6 +9,7 @@
 import typing as tp
 
 import torch
+from ...model.higgs_audio.utils import get_best_device
 
 
 def rank():
@@ -115,7 +116,7 @@ def average_metrics(metrics: tp.Dict[str, float], count=1.0):
     if not is_distributed():
         return metrics
     keys, values = zip(*metrics.items())
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    device = get_best_device()
     tensor = torch.tensor(list(values) + [1], device=device, dtype=torch.float32)
     tensor *= count
     all_reduce(tensor)

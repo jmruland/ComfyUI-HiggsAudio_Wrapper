@@ -2245,6 +2245,10 @@ class HiggsAudioModel(HiggsAudioPreTrainedModel, GenerationMixin):
         Args:
             past_key_values: List of KV caches to capture graphs for
         """
+        # CUDA graphs are only supported on CUDA devices
+        if self.device.type != "cuda":
+            return
+        
         for past_key_value in past_key_values:
             kv_cache_length = past_key_value.get_max_length()
             # We capture two graphs, one for decoding audio tokens and one for decoding text tokens
