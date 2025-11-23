@@ -154,7 +154,7 @@ class HiggsAudio:
                 "temperature": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.1}),
                 "top_p": ("FLOAT", {"default": 0.95, "min": 0.1, "max": 1.0, "step": 0.05}),
                 "top_k": ("INT", {"default": 50, "min": -1, "max": 100}),
-                "device": (["auto", "cuda", "cpu"], {"default": "auto"}),
+                "device": (["auto", "cuda", "mps", "cpu"], {"default": "auto"}),
             },
             "optional": {
                 "voice_preset": (list(VOICE_PRESETS.keys()), {"default": "voice_clone"}),
@@ -172,7 +172,12 @@ class HiggsAudio:
     def generate(self, MODEL_PATH, AUDIO_TOKENIZER_PATH, system_prompt, prompt, max_new_tokens, temperature, top_p, top_k, device, voice_preset="voice_clone", reference_audio=None, reference_text="", audio_priority="auto"):
         # Determine device
         if device == "auto":
-            device = "cuda" if torch.cuda.is_available() else "cpu"
+            if torch.cuda.is_available():
+                device = "cuda"
+            elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+                device = "mps"
+            else:
+                device = "cpu"
         
         # Create cache key
         cache_key = f"{MODEL_PATH}_{AUDIO_TOKENIZER_PATH}_{device}"

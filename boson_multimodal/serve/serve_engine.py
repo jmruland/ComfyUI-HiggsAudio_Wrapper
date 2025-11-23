@@ -269,10 +269,12 @@ class HiggsAudioServeEngine:
             round_to=1,
         )
 
-        # Capture CUDA graphs for each KV cache length
+        # Capture CUDA graphs for each KV cache length (only for CUDA devices)
         if device == "cuda":
             logger.info(f"Capturing CUDA graphs for each KV cache length")
             self.model.capture_model(self.kv_caches.values())
+        else:
+            logger.info(f"Skipping CUDA graph capture for device: {device}")
 
     def _prepare_inputs(self, chat_ml_sample: ChatMLSample, force_audio_gen: bool = False):
         input_tokens, _, audio_contents, _ = prepare_chatml_sample(
