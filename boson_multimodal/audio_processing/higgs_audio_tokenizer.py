@@ -181,7 +181,17 @@ class HiggsAudioTokenizer(nn.Module):
 
     @torch.no_grad()
     def get_regress_target(self, x):
-        x = torchaudio.functional.resample(x, self.sample_rate, self.semantic_sample_rate)
+        # Temporarily move to CPU for resampling if on MPS device
+        # This avoids the MPS conv1d output channels > 65536 limitation
+        original_device = x.device
+        if x.device.type == 'mps':
+            x_resample = x.cpu()
+            x_resampled = torchaudio.functional.resample(
+                x_resample, self.sample_rate, self.semantic_sample_rate
+            )
+            x = x_resampled.to(original_device)
+        else:
+            x = torchaudio.functional.resample(x, self.sample_rate, self.semantic_sample_rate)
 
         if (
             self.semantic_techer == "hubert_base"
