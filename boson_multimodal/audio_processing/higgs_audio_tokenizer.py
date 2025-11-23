@@ -239,7 +239,15 @@ class HiggsAudioTokenizer(nn.Module):
         e_semantic_input = self.get_regress_target(x).detach()
 
         e_semantic = self.encoder_semantic(e_semantic_input.transpose(1, 2))
-        e_acoustic = self.encoder(x)
+        
+        # Handle MPS device limitation for encoder conv1d operations
+        original_device = x.device
+        if x.device.type == 'mps':
+            x_cpu = x.cpu()
+            e_acoustic = self.encoder(x_cpu)
+            e_acoustic = e_acoustic.to(original_device)
+        else:
+            e_acoustic = self.encoder(x)
 
         e = torch.cat([e_acoustic, e_semantic], dim=1)
 
@@ -295,11 +303,24 @@ class HiggsAudioTokenizer(nn.Module):
         e_semantic_input = self.get_regress_target(x).detach()
 
         e_semantic = self.encoder_semantic(e_semantic_input.transpose(1, 2))
-        e_acoustic = self.encoder(x)
+        
+        # Handle MPS device limitation for encoder conv1d operations
+        original_device = x.device
+        if x.device.type == 'mps':
+            x_cpu = x.cpu()
+            e_acoustic = self.encoder(x_cpu)
+            e_acoustic = e_acoustic.to(original_device)
+        else:
+            e_acoustic = self.encoder(x)
 
         if e_acoustic.shape[2] != e_semantic.shape[2]:
             pad_size = 160 * self.semantic_downsample_factor
-            e_acoustic = self.encoder(F.pad(x[:, 0, :], (pad_size, pad_size)).unsqueeze(0))
+            if original_device.type == 'mps':
+                x_padded = F.pad(x[:, 0, :], (pad_size, pad_size)).unsqueeze(0).cpu()
+                e_acoustic = self.encoder(x_padded)
+                e_acoustic = e_acoustic.to(original_device)
+            else:
+                e_acoustic = self.encoder(F.pad(x[:, 0, :], (pad_size, pad_size)).unsqueeze(0))
 
         if e_acoustic.shape[2] != e_semantic.shape[2]:
             if e_acoustic.shape[2] > e_semantic.shape[2]:
@@ -323,6 +344,8 @@ class HiggsAudioTokenizer(nn.Module):
         return EncodedResult(codes)
 
     def decode(self, vq_code: torch.Tensor) -> torch.Tensor:
+        original_device = vq_code.device
+        
         if self.quantizer_type == "RVQ":
             vq_code = vq_code.permute(1, 0, 2)
             quantized = self.quantizer.decode(vq_code)
@@ -332,7 +355,13 @@ class HiggsAudioTokenizer(nn.Module):
             quantized = self.quantizer.get_output_from_indices(vq_code)
         quantized_acoustic = self.fc_post2(quantized).transpose(1, 2)
 
-        o = self.decoder_2(quantized_acoustic)
+        # Handle MPS device limitation for decoder conv1d operations
+        if original_device.type == 'mps':
+            quantized_acoustic_cpu = quantized_acoustic.cpu()
+            o = self.decoder_2(quantized_acoustic_cpu)
+            o = o.to(original_device)
+        else:
+            o = self.decoder_2(quantized_acoustic)
         return o.cpu().numpy()
 
 
