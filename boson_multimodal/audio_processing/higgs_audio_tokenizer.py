@@ -243,8 +243,13 @@ class HiggsAudioTokenizer(nn.Module):
         # Handle MPS device limitation for encoder conv1d operations
         original_device = x.device
         if x.device.type == 'mps':
+            # Move both input and encoder to CPU to avoid device mismatch
             x_cpu = x.cpu()
+            encoder_device = next(self.encoder.parameters()).device
+            self.encoder.to('cpu')
             e_acoustic = self.encoder(x_cpu)
+            # Move encoder back to original device
+            self.encoder.to(encoder_device)
             e_acoustic = e_acoustic.to(original_device)
         else:
             e_acoustic = self.encoder(x)
@@ -307,8 +312,13 @@ class HiggsAudioTokenizer(nn.Module):
         # Handle MPS device limitation for encoder conv1d operations
         original_device = x.device
         if x.device.type == 'mps':
+            # Move both input and encoder to CPU to avoid device mismatch
             x_cpu = x.cpu()
+            encoder_device = next(self.encoder.parameters()).device
+            self.encoder.to('cpu')
             e_acoustic = self.encoder(x_cpu)
+            # Move encoder back to original device
+            self.encoder.to(encoder_device)
             e_acoustic = e_acoustic.to(original_device)
         else:
             e_acoustic = self.encoder(x)
@@ -316,8 +326,13 @@ class HiggsAudioTokenizer(nn.Module):
         if e_acoustic.shape[2] != e_semantic.shape[2]:
             pad_size = 160 * self.semantic_downsample_factor
             if original_device.type == 'mps':
+                # Move both input and encoder to CPU to avoid device mismatch
                 x_padded = F.pad(x[:, 0, :], (pad_size, pad_size)).unsqueeze(0).cpu()
+                encoder_device = next(self.encoder.parameters()).device
+                self.encoder.to('cpu')
                 e_acoustic = self.encoder(x_padded)
+                # Move encoder back to original device
+                self.encoder.to(encoder_device)
                 e_acoustic = e_acoustic.to(original_device)
             else:
                 e_acoustic = self.encoder(F.pad(x[:, 0, :], (pad_size, pad_size)).unsqueeze(0))
